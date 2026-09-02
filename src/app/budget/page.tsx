@@ -172,7 +172,7 @@ export default function BudgetPage() {
       {/* ── Шапка ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bb-rise">
         <div>
-          <h1 className="bb-title text-[34px] leading-tight mb-1">Рассылки</h1>
+          <h1 className="bb-title text-[26px] sm:text-[34px] leading-tight mb-1">Рассылки</h1>
           <p className="bb-sub text-sm">Две утренние рассылки: список Budget Units и Quick Sales.</p>
         </div>
         <Segmented
@@ -190,7 +190,7 @@ export default function BudgetPage() {
       ) : (
         <>
           {/* ── Трекер проектов ── */}
-          <div className="bb-card p-5 bb-rise" style={{ animationDelay: '60ms' }}>
+          <div className="bb-card p-4 sm:p-5 bb-rise" style={{ animationDelay: '60ms' }}>
             <div className="flex items-center gap-2.5 mb-3.5 flex-wrap">
               <span className="bb-title text-[16px]">Расписание рассылки</span>
               <span className="bb-chip bb-chip-sky">{formatDateRu()}</span>
@@ -269,7 +269,7 @@ export default function BudgetPage() {
 
           {/* ── Форма и превью ── */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
-            <div className="bb-card p-6 space-y-5 bb-rise" style={{ animationDelay: '120ms' }}>
+            <div className="bb-card p-4 sm:p-6 space-y-5 bb-rise" style={{ animationDelay: '120ms' }}>
               {/* Проект берётся из плашки в трекере — отдельный список тут не нужен */}
               <div>
                 <label className="bb-label block mb-2">Проект</label>
@@ -320,8 +320,8 @@ export default function BudgetPage() {
             </div>
 
             {parsedData && (
-              <div className="bb-card p-6 bb-rise">
-                <div className="flex items-center justify-between mb-4 gap-3">
+              <div className="bb-card p-4 sm:p-6 bb-rise">
+                <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
                   <h3 className="bb-title text-[17px]">Текст для WhatsApp</h3>
                   <button
                     onClick={() => {
@@ -337,7 +337,7 @@ export default function BudgetPage() {
                 </div>
 
                 <div
-                  className="p-5 text-sm whitespace-pre-wrap overflow-auto max-h-[520px]"
+                  className="p-4 sm:p-5 text-sm whitespace-pre-wrap overflow-auto max-h-[520px]"
                   style={{ background: 'var(--sky-50)', borderRadius: 'var(--r-md)', color: 'var(--ink-900)' }}
                 >
                   {parsedData.text}

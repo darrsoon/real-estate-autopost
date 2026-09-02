@@ -736,7 +736,11 @@ export default function PlanCropPage() {
     const el = rowRef.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
-      const per = Math.floor((entry.contentRect.width - GAP) / 2) - CARD_PAD;
+      const w = entry.contentRect.width;
+      // Два столбца влезают не всегда: на телефоне рамки идут в один и берут
+      // всю ширину, иначе они упирались бы в VIEW_MIN и зря теряли полэкрана.
+      const twoCols = w >= 2 * (VIEW_MIN + CARD_PAD) + GAP;
+      const per = twoCols ? Math.floor((w - GAP) / 2) - CARD_PAD : Math.floor(w) - CARD_PAD;
       setView(Math.max(VIEW_MIN, Math.min(VIEW_MAX, per)));
     });
     ro.observe(el);
@@ -887,7 +891,7 @@ export default function PlanCropPage() {
 
   return (
     <div className="max-w-[1160px] mx-auto space-y-6 bb-rise">
-      <div className="bb-card p-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="bb-card p-4 sm:p-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="bb-title text-2xl">Кадрирование картинок</h1>
           <p className="bb-sub text-sm mt-1">
@@ -1412,7 +1416,7 @@ function Frame({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* ── Фон ── */}
         <div className="rounded-2xl p-3 space-y-2" style={{ background: 'var(--sky-50)' }}>
           <div className="flex items-center justify-between">

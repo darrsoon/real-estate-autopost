@@ -70,7 +70,7 @@ export default function ProjectsPage() {
   const row = (r: Row) => (
     <div
       key={r.projectId}
-      className="flex items-center gap-2 px-2 py-1.5 rounded-lg bb-hover-soft"
+      className="flex flex-wrap items-center gap-2 px-2 py-1.5 rounded-lg bb-hover-soft"
       style={!r.photosFolderUrl ? { background: 'var(--lemon)' } : undefined}
     >
       <input
@@ -81,7 +81,7 @@ export default function ProjectsPage() {
         title="Смайлик проекта"
         className="w-9 shrink-0 px-1 py-1 bb-surface-soft border bb-edge rounded-md text-center text-base outline-none focus:ring-2 focus:bb-ring"
       />
-      <span className="text-sm bb-ink-2 truncate w-44 shrink-0" title={r.projectName}>
+      <span className="text-sm bb-ink-2 truncate w-[calc(100%-3.25rem)] sm:w-44 shrink-0" title={r.projectName}>
         {r.projectName || '(без имени)'}
       </span>
       <input
@@ -90,7 +90,7 @@ export default function ProjectsPage() {
         onBlur={() => save(r, { photosFolderUrl: r.photosFolderUrl })}
         placeholder="создай папку с фото и вставь ссылку"
         title="Ссылка на папку Drive с фотографиями проекта"
-        className="flex-1 min-w-0 px-2 py-1 bb-surface-soft border bb-edge rounded-md text-xs bb-ink outline-none focus:ring-2 focus:bb-ring"
+        className="flex-1 min-w-[160px] px-2 py-1 bb-surface-soft border bb-edge rounded-md text-xs bb-ink outline-none focus:ring-2 focus:bb-ring"
         style={!isFolderUrl(r.photosFolderUrl) ? { background: 'var(--peach)' } : undefined}
       />
       {r.photosFolderUrl && isFolderUrl(r.photosFolderUrl) && (

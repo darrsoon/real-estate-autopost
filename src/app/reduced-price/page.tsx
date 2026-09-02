@@ -34,8 +34,8 @@ export default function ReducedPricePage() {
         <p className="bb-ink-3">Search for old Telegram posts using MTProto (GramJS).</p>
       </div>
 
-      <div className="bb-surface border bb-edge rounded-xl p-6 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+      <div className="bb-surface border bb-edge rounded-xl p-4 sm:p-6 space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium bb-ink-2 mb-1">Project</label>
             <input 
@@ -66,7 +66,7 @@ export default function ReducedPricePage() {
       </div>
 
       {posts.length > 0 && (
-        <div className="bb-surface border bb-edge rounded-xl p-6 space-y-4">
+        <div className="bb-surface border bb-edge rounded-xl p-4 sm:p-6 space-y-4">
           <h3 className="text-lg font-medium bb-ink">Candidates found ({posts.length})</h3>
           <div className="space-y-4">
             {posts.map(post => (

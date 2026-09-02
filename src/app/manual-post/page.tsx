@@ -280,8 +280,8 @@ function ManualPostForm() {
       </div>
 
       {lastSent && (
-        <div className="flex items-center gap-4 mb-6 p-4 rounded-2xl bb-tint-ok border bb-edge">
-          <div className="flex-1 text-sm bb-ok">
+        <div className="flex flex-wrap items-center gap-3 mb-6 p-4 rounded-2xl bb-tint-ok border bb-edge">
+          <div className="w-full sm:flex-1 text-sm bb-ok">
             Пост отправлен —{' '}
             <span className="font-mono font-semibold">{lastSent.code || lastSent.unit}</span>
             . Отметить как Approved в таблице?
@@ -335,10 +335,10 @@ function ManualPostForm() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 xl:gap-8">
         {/* Left Column: Input Form & Preview */}
         <div className="space-y-8">
-          <div className="p-6 rounded-2xl bb-surface border bb-edge relative overflow-hidden">
+          <div className="p-4 sm:p-6 rounded-2xl bb-surface border bb-edge relative overflow-hidden">
 
             <div className="space-y-5">
               {/* Source toggle */}
@@ -453,7 +453,7 @@ function ManualPostForm() {
           </div>
 
           {postPreview && (
-            <div className="p-6 rounded-2xl bb-surface border bb-edge space-y-4">
+            <div className="p-4 sm:p-6 rounded-2xl bb-surface border bb-edge space-y-4">
               <h3 className="text-lg font-semibold bb-ink flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bb-fill-accent animate-pulse" />
                 Preview &amp; Edit
@@ -506,7 +506,7 @@ function ManualPostForm() {
 
         {/* Right Column: Parsed Data Editor */}
         {parsedData && (
-          <div className="p-6 rounded-2xl bb-surface border bb-edge space-y-6 h-fit">
+          <div className="p-4 sm:p-6 rounded-2xl bb-surface border bb-edge space-y-6 h-fit">
             <div className="flex items-center justify-between border-b bb-edge pb-4">
               <h3 className="text-lg font-semibold bb-ink flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bb-fill-accent" />
@@ -518,7 +518,7 @@ function ManualPostForm() {
             </div>
 
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs bb-ink-3 mb-1">Unit / Code</label>
                   <input type="text" value={parsedData.code || parsedData.unit} onChange={(e) => updateField('code', e.target.value)} className="w-full px-3 py-2 bb-surface-soft border bb-edge rounded-lg text-sm bb-ink outline-none focus:ring-2 focus:bb-ring" />
@@ -531,7 +531,7 @@ function ManualPostForm() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs bb-ink-3 mb-1">Selling Price (AED)</label>
                   <input type="text" value={parsedData.sellingPrice} onChange={(e) => updateField('sellingPrice', e.target.value)} className="w-full px-3 py-2 bb-surface-soft border bb-edge rounded-lg text-sm bb-ok font-medium outline-none focus:ring-2 focus:bb-ring" />
@@ -542,7 +542,7 @@ function ManualPostForm() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {(postType === 'NEW_PRICE' || postType === 'PRICE_CHANGE') ? (
                   <div>
                     <div className="flex items-center justify-between mb-1">
@@ -599,7 +599,7 @@ function ManualPostForm() {
               </div>
 
               {postType !== 'PRICE_CHANGE' && (
-                <div className="grid grid-cols-2 gap-4 border-t bb-edge pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t bb-edge pt-4">
                   {!isVilla && (
                     <div>
                       <label className="block text-xs bb-ink-3 mb-1">Area (sqm)</label>
@@ -645,14 +645,14 @@ function ManualPostForm() {
               )}
 
               {postType !== 'PRICE_CHANGE' && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {!isVilla && (
                     <div>
                       <label className="block text-xs bb-ink-3 mb-1">View</label>
                       <input type="text" value={parsedData.view || ''} onChange={(e) => updateField('view', e.target.value)} className="w-full px-3 py-2 bb-surface-soft border bb-edge rounded-lg text-sm bb-ink outline-none focus:ring-2 focus:bb-ring" />
                     </div>
                   )}
-                  <div className={isVilla ? "col-span-2" : ""}>
+                  <div className={isVilla ? "sm:col-span-2" : ""}>
                     <label className="block text-xs bb-ink-3 mb-1">Handover</label>
                     <input type="text" value={parsedData.handover || ''} onChange={(e) => updateField('handover', e.target.value)} className="w-full px-3 py-2 bb-surface-soft border bb-edge rounded-lg text-sm bb-ink outline-none focus:ring-2 focus:bb-ring" />
                   </div>
@@ -660,7 +660,7 @@ function ManualPostForm() {
               )}
 
               {isVilla && (
-                <div className="grid grid-cols-2 gap-4 border-t bb-edge pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t bb-edge pt-4">
                   <div>
                     <label className="block text-xs bb-ink-3 mb-1">Row (Single / Double)</label>
                     <input type="text" value={parsedData.rowName || ''} onChange={(e) => updateField('rowName', e.target.value)} className="w-full px-3 py-2 bb-surface-soft border bb-edge rounded-lg text-sm bb-ink outline-none focus:ring-2 focus:bb-ring" />

@@ -199,7 +199,7 @@ export default function BrokerCheckPage() {
 
       {/* Настройки */}
       {showSettings && settings && (
-        <div className="mb-5 p-4 rounded-2xl bb-surface border bb-edge space-y-4">
+        <div className="mb-5 p-3 sm:p-4 rounded-2xl bb-surface border bb-edge space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="block">
               <span className="text-xs bb-ink-2 block mb-1">Ассистент (кто ведёт листинги)</span>

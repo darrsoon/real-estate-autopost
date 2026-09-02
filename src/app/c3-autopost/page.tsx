@@ -96,7 +96,7 @@ export default function C3AutopostPage() {
       
       <p className="bb-ink-3">Automated post builder for C3 Garden Residence. Select a unit to automatically fetch data and Google Drive slide image.</p>
 
-      <div className="bb-surface border bb-edge rounded-xl p-6">
+      <div className="bb-surface border bb-edge rounded-xl p-4 sm:p-6">
         <div className="max-w-sm space-y-4">
           <div>
             <label className="block text-sm font-medium bb-ink-2 mb-2">Select Unit</label>
@@ -134,7 +134,7 @@ export default function C3AutopostPage() {
 
       {parsedData && previewHtml && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bb-surface border bb-edge rounded-xl p-6">
+          <div className="bb-surface border bb-edge rounded-xl p-4 sm:p-6">
             <h2 className="text-lg font-medium bb-ink mb-4">Preview Slide</h2>
             {parsedData.slideDataUrl ? (
               <img src={parsedData.slideDataUrl} alt="Slide" className="rounded-lg shadow-lg border bb-edge w-full" />
@@ -143,7 +143,7 @@ export default function C3AutopostPage() {
             )}
           </div>
 
-          <div className="bb-surface border bb-edge rounded-xl p-6 flex flex-col">
+          <div className="bb-surface border bb-edge rounded-xl p-4 sm:p-6 flex flex-col">
             <h2 className="text-lg font-medium bb-ink mb-4">Telegram Post Preview</h2>
             
             <div className="flex-1 bb-surface-soft rounded-lg p-4 font-mono text-sm whitespace-pre-wrap bb-ink-2 border bb-edge overflow-y-auto max-h-96 custom-scrollbar mb-4"

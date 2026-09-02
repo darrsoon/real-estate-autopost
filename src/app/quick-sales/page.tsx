@@ -116,7 +116,7 @@ export default function QuickSalesPage() {
       )}
 
       {!loading && !error && count === 0 && (
-        <div className="bb-card p-6 bb-sub text-sm">
+        <div className="bb-card p-4 sm:p-6 bb-sub text-sm">
           В базе нет юнитов со срочной продажей.
         </div>
       )}
@@ -124,7 +124,7 @@ export default function QuickSalesPage() {
       {count > 0 && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
           {/* ── Что попало в подборку ── */}
-          <div className="bb-card p-6 space-y-4 bb-rise">
+          <div className="bb-card p-4 sm:p-6 space-y-4 bb-rise">
             <h3 className="bb-title text-[17px]">Что вошло</h3>
             {groups.map(g => (
               <div key={g.project} className="space-y-1.5">
@@ -150,8 +150,8 @@ export default function QuickSalesPage() {
           </div>
 
           {/* ── Текст и отправка ── */}
-          <div className="bb-card p-6 bb-rise" style={{ animationDelay: '60ms' }}>
-            <div className="flex items-center justify-between mb-4 gap-3">
+          <div className="bb-card p-4 sm:p-6 bb-rise" style={{ animationDelay: '60ms' }}>
+            <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
               <h3 className="bb-title text-[17px]">
                 Текст для WhatsApp
                 {edited && <span className="bb-sub text-xs font-normal"> · изменён</span>}

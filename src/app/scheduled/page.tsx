@@ -214,15 +214,15 @@ export default function ScheduledPage() {
       )}
 
       {/* Chat ID */}
-      <div className="p-5 rounded-2xl bb-surface border bb-edge space-y-3">
+      <div className="p-4 sm:p-5 rounded-2xl bb-surface border bb-edge space-y-3">
         <h2 className="text-sm font-semibold bb-ink-2 uppercase tracking-wider">⚙️ WhatsApp Chat ID</h2>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <input
             type="text"
             value={chatId}
             onChange={e => setChatId(e.target.value)}
             placeholder="120363...@g.us для группы или номер@c.us для личного чата"
-            className="flex-1 px-3 py-2 bb-surface-soft border bb-edge rounded-xl text-sm bb-ink outline-none focus:ring-2 focus:bb-ring font-mono"
+            className="flex-1 min-w-[200px] px-3 py-2 bb-surface-soft border bb-edge rounded-xl text-sm bb-ink outline-none focus:ring-2 focus:bb-ring font-mono"
           />
           <button
             onClick={saveChatId}
@@ -244,13 +244,13 @@ export default function ScheduledPage() {
 
       {/* Queue */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-semibold bb-ink-2 uppercase tracking-wider">📋 Очередь ({waiting.length})</h2>
           {waiting.length > 0 && (
             clearing ? (
               <span className="text-xs px-3 py-1.5 bb-ink-3">Очищаю…</span>
             ) : confirmClear ? (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs bb-ink-3">Удалить все {waiting.length}? Это не отменить.</span>
                 <button
                   onClick={clearAll}

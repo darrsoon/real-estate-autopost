@@ -78,7 +78,7 @@ export default function CanvaWeeklyPage() {
   const successes = logs.filter(l => l.type === 'done').length;
 
   return (
-    <main style={{ minHeight: '100vh', background: '#0f0f0f', color: '#fff', padding: '40px', fontFamily: 'sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: '#0f0f0f', color: '#fff', padding: 'clamp(16px, 5vw, 40px)', fontFamily: 'sans-serif' }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Презентации → Telegram</h1>
         <p style={{ color: '#888', fontSize: 14, marginBottom: 32 }}>

@@ -297,7 +297,7 @@ export default function CatalogPage() {
 
           {/* STEP 1: Input */}
           {step === 'input' && (
-            <div className="p-6 rounded-2xl bb-surface border bb-edge relative max-w-2xl">
+            <div className="p-4 sm:p-6 rounded-2xl bb-surface border bb-edge relative max-w-2xl">
               <div className="space-y-6">
                 <div className="relative">
                   <label className="block text-sm font-medium bb-ink-2 mb-2">Project Name</label>
@@ -348,7 +348,7 @@ export default function CatalogPage() {
           {/* STEP 2: Preview & Edit */}
           {step === 'preview' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <button onClick={() => { setStep('input'); setError(''); }}
                     className="text-sm bb-ink-3 hover:bb-ink transition-colors">← Back</button>
@@ -366,7 +366,7 @@ export default function CatalogPage() {
 
               <div className="space-y-4">
                 {previewRows.map((row, idx) => (
-                  <div key={row.home_listing_id} className="p-5 rounded-2xl bb-surface border bb-edge">
+                  <div key={row.home_listing_id} className="p-4 sm:p-5 rounded-2xl bb-surface border bb-edge">
                     <div className="flex items-center gap-2 mb-3 flex-wrap">
                       <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${typeColor(row.property_type)}`}>
                         {typeLabel(row.property_type)}
@@ -428,7 +428,7 @@ export default function CatalogPage() {
           {/* STEP 3: Saved — add covers */}
           {step === 'saved' && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bb-fill-accent animate-pulse" />
                   <span className="text-sm font-semibold bb-ink">{savedRows.length} types saved</span>
@@ -467,7 +467,7 @@ export default function CatalogPage() {
 
       {/* ── MANAGE TAB ── */}
       {tab === 'manage' && (
-        <div className="p-6 rounded-2xl bb-surface border bb-edge relative overflow-hidden">
+        <div className="p-4 sm:p-6 rounded-2xl bb-surface border bb-edge relative overflow-hidden">
           {itemsLoading ? (
             <div className="flex items-center gap-2 bb-ink-4 py-8 justify-center">
               <div className="w-4 h-4 border-2 bb-spin rounded-full animate-spin" />

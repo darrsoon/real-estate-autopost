@@ -85,7 +85,7 @@ export default function WaMonitorPage() {
       </div>
 
       {/* Trigger words */}
-      <section className="bb-card p-6 mb-4">
+      <section className="bb-card p-4 sm:p-6 mb-4">
         <h2 className="bb-title text-[17px] mb-1">Триггерные слова</h2>
         <p className="text-sm bb-ink-3 mb-4">
           Когда ты делаешь Reply на сообщение брокера и пишешь одно из этих слов — запрос сохраняется.
@@ -116,7 +116,7 @@ export default function WaMonitorPage() {
       </section>
 
       {/* Reminder delay */}
-      <section className="bb-card p-6 mb-4">
+      <section className="bb-card p-4 sm:p-6 mb-4">
         <h2 className="bb-title text-[17px] mb-1">Через сколько напоминать</h2>
         <p className="text-sm bb-ink-3 mb-4">
           Сколько ждать после запроса брокера, прежде чем прислать напоминание в Telegram.
@@ -144,7 +144,7 @@ export default function WaMonitorPage() {
       </section>
 
       {/* Instances */}
-      <section className="bb-card p-6 mb-4">
+      <section className="bb-card p-4 sm:p-6 mb-4">
         <h2 className="bb-title text-[17px] mb-1">Green API инстансы</h2>
         <p className="text-sm bb-ink-3 mb-4">
           Каждый инстанс = один WhatsApp номер. Добавь свой и коллеги.
@@ -165,7 +165,7 @@ export default function WaMonitorPage() {
           {instances.length === 0 && <p className="bb-ink-4 text-sm">Нет инстансов</p>}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 mb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
           <input
             value={newInstance.name}
             onChange={e => setNewInstance({ ...newInstance, name: e.target.value })}
@@ -197,7 +197,7 @@ export default function WaMonitorPage() {
 
         <p className="text-xs bb-ink-4 mt-3">
           После добавления инстанса нужно поставить вебхук в Green API консоли:<br />
-          <span className="font-mono bb-ink-3">https://real-estate-autopost.vercel.app/api/wa-monitor/webhook</span>
+          <span className="font-mono bb-ink-3 break-all">https://real-estate-autopost.vercel.app/api/wa-monitor/webhook</span>
         </p>
       </section>
 

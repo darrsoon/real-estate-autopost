@@ -68,7 +68,7 @@ export default function DriveAuditPage() {
         </p>
       </div>
 
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-6">
         <button
           onClick={run}
           disabled={running}
@@ -95,7 +95,7 @@ export default function DriveAuditPage() {
       {result && (
         <>
           {/* Summary */}
-          <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
             {[
               { label: 'Всего проверено', value: result.total, color: 'bb-ink' },
               { label: 'На месте',        value: result.ok,    color: 'bb-ok' },
@@ -128,7 +128,7 @@ export default function DriveAuditPage() {
 
           {/* Table */}
           <div className="rounded-2xl bb-surface border bb-edge overflow-auto max-h-[70vh]">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[860px] text-sm">
               <thead className="sticky top-0 z-10 bb-surface">
                 <tr className="border-b bb-edge text-left">
                   <th className="px-4 py-3 text-xs font-semibold bb-ink-3 uppercase tracking-wide">Строка</th>
