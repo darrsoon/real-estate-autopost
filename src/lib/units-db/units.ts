@@ -146,6 +146,8 @@ export interface RawUnit {
   old_price_aed: string | null;
   selling_price_aed: string | null;
   approx_rental_rate: string | null;
+  rental_yield_aed: string | null;
+  rental_amount_aed: string | null;
   payment_plan_label: string | null;
   readiness: string | null;
   row_type: string | null;
@@ -165,7 +167,8 @@ export async function listAllAvailableUnits(): Promise<RawUnit[]> {
         u.property_type, u.unit_type, u.view, u.floor,
         u.area_sqm, u.gross_area_sqm, u.plot_area_sqm,
         u.original_price_aed, u.old_price_aed, u.selling_price_aed,
-        u.approx_rental_rate, u.payment_plan_label, u.readiness::text AS readiness,
+        u.approx_rental_rate, u.rental_yield_aed, u.rental_amount_aed,
+        u.payment_plan_label, u.readiness::text AS readiness,
         u.row_type, u.unit_position,
         u.handover_date AS unit_handover,
         b.handover_date AS building_handover
@@ -193,7 +196,8 @@ export async function listAvailableUnits(projectName: string): Promise<RawUnit[]
         u.property_type, u.unit_type, u.view, u.floor,
         u.area_sqm, u.gross_area_sqm, u.plot_area_sqm,
         u.original_price_aed, u.old_price_aed, u.selling_price_aed,
-        u.approx_rental_rate, u.payment_plan_label, u.readiness::text AS readiness,
+        u.approx_rental_rate, u.rental_yield_aed, u.rental_amount_aed,
+        u.payment_plan_label, u.readiness::text AS readiness,
         u.row_type, u.unit_position,
         u.handover_date AS unit_handover,
         b.handover_date AS building_handover
@@ -222,7 +226,8 @@ export async function listQuickSaleUnits(): Promise<RawUnit[]> {
         u.property_type, u.unit_type, u.view, u.floor,
         u.area_sqm, u.gross_area_sqm, u.plot_area_sqm,
         u.original_price_aed, u.old_price_aed, u.selling_price_aed,
-        u.approx_rental_rate, u.payment_plan_label, u.readiness::text AS readiness,
+        u.approx_rental_rate, u.rental_yield_aed, u.rental_amount_aed,
+        u.payment_plan_label, u.readiness::text AS readiness,
         u.row_type, u.unit_position,
         u.handover_date AS unit_handover,
         b.handover_date AS building_handover
@@ -239,6 +244,37 @@ export async function listQuickSaleUnits(): Promise<RawUnit[]> {
   return rows as RawUnit[];
 }
 
+// Один юнит по проекту и номеру квартиры. Так ищет вкладка C3: там выбирают
+// не код (041·02·004), а номер юнита (G01, 203) — им же назван слайд на Диске.
+export async function getUnitByNumber(projectName: string, unitNumber: string): Promise<RawUnit | null> {
+  const [rows] = await readOnly([
+    sql`
+      SELECT
+        u.id, u.code, u.unit_number, u.project_id,
+        p.name AS project_name,
+        d.name AS island,
+        u.property_type, u.unit_type, u.view, u.floor,
+        u.area_sqm, u.gross_area_sqm, u.plot_area_sqm,
+        u.original_price_aed, u.old_price_aed, u.selling_price_aed,
+        u.approx_rental_rate, u.rental_yield_aed, u.rental_amount_aed,
+        u.payment_plan_label, u.readiness::text AS readiness,
+        u.row_type, u.unit_position,
+        u.handover_date AS unit_handover,
+        b.handover_date AS building_handover
+      FROM units u
+      JOIN projects p ON p.id = u.project_id
+      LEFT JOIN districts d ON d.id = p.district_id
+      LEFT JOIN buildings b ON b.id = u.building_ref_id
+      WHERE u.emirate::text = 'Abu Dhabi'
+        AND lower(p.name) = lower(${projectName})
+        AND lower(trim(u.unit_number)) = lower(trim(${unitNumber}))
+      LIMIT 1
+    `,
+  ]);
+  const r = (rows as any[])[0];
+  return r ? (r as RawUnit) : null;
+}
+
 // Fetch a single unit (with project, island, per-building handover) by its id.
 export async function getRawUnit(id: string): Promise<RawUnit | null> {
   const [rows] = await readOnly([
@@ -250,7 +286,8 @@ export async function getRawUnit(id: string): Promise<RawUnit | null> {
         u.property_type, u.unit_type, u.view, u.floor,
         u.area_sqm, u.gross_area_sqm, u.plot_area_sqm,
         u.original_price_aed, u.old_price_aed, u.selling_price_aed,
-        u.approx_rental_rate, u.payment_plan_label, u.readiness::text AS readiness,
+        u.approx_rental_rate, u.rental_yield_aed, u.rental_amount_aed,
+        u.payment_plan_label, u.readiness::text AS readiness,
         u.row_type, u.unit_position,
         u.handover_date AS unit_handover,
         b.handover_date AS building_handover

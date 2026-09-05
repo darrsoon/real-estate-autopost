@@ -16,6 +16,9 @@ export interface PostData {
   objectType?: string;
   code?: string;
   unit?: string;
+  // Номер квартиры. У виллы в `unit` лежит положение дома в ряду, поэтому номер
+  // хранится отдельно — по нему ищут слайд C3 и строку в листе «C3 Garden Res».
+  unitNumber?: string;
   type?: string;
   view?: string;
   originalPrice?: string | number;

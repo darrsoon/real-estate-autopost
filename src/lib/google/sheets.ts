@@ -1,5 +1,4 @@
 import { google } from 'googleapis';
-import { normalizeText, toNumber } from '../posts/formatters';
 import { getGoogleAuthClient } from './auth';
 
 export async function getGoogleSheetsClient() {
@@ -18,74 +17,6 @@ export async function getSheetData(spreadsheetId: string, sheetName: string) {
   });
 
   return response.data.values || [];
-}
-
-export async function getProjectParseConfig(projectName: string) {
-  const spreadsheetId = process.env.GOOGLE_SHEETS_CONFIG_ID || '';
-  const data = await getSheetData(spreadsheetId, 'PROJECT_PARSE_CONFIG');
-  if (data.length < 2) return { objectType: 'Apartment', parseFormat: 'APART_STANDARD' };
-
-  const headers = data[0].map(h => String(h).trim());
-  const projectCol = headers.indexOf('Project Name');
-  const objectTypeCol = headers.indexOf('Object Type');
-  const parseFormatCol = headers.indexOf('Parse Format');
-
-  if (projectCol === -1) return { objectType: 'Apartment', parseFormat: 'APART_STANDARD' };
-
-  const target = normalizeText(projectName);
-
-  for (let i = 1; i < data.length; i++) {
-    if (normalizeText(data[i][projectCol]) === target) {
-      return {
-        objectType: objectTypeCol !== -1 && data[i][objectTypeCol] ? String(data[i][objectTypeCol]).trim() : 'Apartment',
-        parseFormat: parseFormatCol !== -1 && data[i][parseFormatCol] ? String(data[i][parseFormatCol]).trim() : 'APART_STANDARD',
-      };
-    }
-  }
-
-  return { objectType: 'Apartment', parseFormat: 'APART_STANDARD' };
-}
-
-export async function findApproxRentalRateForObject(projectName: string, code: string, unit: string) {
-  const spreadsheetId = process.env.GOOGLE_SHEETS_OBJECTS_ID;
-  if (!spreadsheetId) return '';
-
-  const data = await getSheetData(spreadsheetId, 'Abu Dhabi');
-  if (data.length < 2) return '';
-
-  const headers = data[0].map(h => normalizeText(String(h || '').trim()));
-  
-  const projectCol = headers.findIndex(h => h === normalizeText('Project Name') || h === normalizeText('Проект'));
-  const codeCol = headers.findIndex(h => h === normalizeText('Code') || h === normalizeText('Код'));
-  const unitCol = headers.findIndex(h => h === normalizeText('Unit'));
-  const rentalCol = headers.findIndex(h => h === normalizeText('Approx. rental rate'));
-
-  if (projectCol === -1 || rentalCol === -1) return '';
-
-  const targetProject = normalizeText(projectName);
-  const targetCode = String(code || '').replace(/\u00A0/g, ' ').replace(/\s+/g, '').replace(/^#/, '').trim().toLowerCase();
-  const targetUnit = String(unit || '').replace(/\u00A0/g, ' ').replace(/\s+/g, '').replace(/^#/, '').trim().toLowerCase();
-
-  if (!targetProject || (!targetCode && !targetUnit)) return '';
-
-  for (let i = 1; i < data.length; i++) {
-    const rowProject = normalizeText(data[i][projectCol]);
-    if (rowProject !== targetProject) continue;
-
-    const rowCode = codeCol !== -1 ? String(data[i][codeCol]).replace(/\u00A0/g, ' ').replace(/\s+/g, '').replace(/^#/, '').trim().toLowerCase() : '';
-    const rowUnit = unitCol !== -1 ? String(data[i][unitCol]).replace(/\u00A0/g, ' ').replace(/\s+/g, '').replace(/^#/, '').trim().toLowerCase() : '';
-
-    const matchByCode = targetCode && rowCode && rowCode === targetCode;
-    const matchByUnit = targetUnit && rowUnit && rowUnit === targetUnit;
-    const matchCodeToUnit = targetCode && rowUnit && rowCode === targetUnit;
-    const matchUnitToCode = targetUnit && rowCode && rowUnit === targetCode;
-
-    if (matchByCode || matchByUnit || matchCodeToUnit || matchUnitToCode) {
-      return String(data[i][rentalCol] || '').trim();
-    }
-  }
-
-  return '';
 }
 
 // #d9ead3 — approved green
@@ -227,98 +158,11 @@ export async function approveUnitRow(code: string, unit?: string): Promise<{ row
   return { row: rowIndex + 1, sheet: sheetTitle };
 }
 
-export async function getC3Units(): Promise<string[]> {
-  const spreadsheetId = process.env.GOOGLE_SHEETS_CONFIG_ID;
-  if (!spreadsheetId) return [];
+// ── C3 ──────────────────────────────────────────────────────────────────────
 
-  const data = await getSheetData(spreadsheetId, 'OBJECTS');
-  if (data.length < 2) return [];
-
-  const headers = data[0].map(h => normalizeText(String(h || '').trim()));
-  const projectCol = headers.findIndex(h => h === normalizeText('Project Name'));
-  const unitCol = headers.findIndex(h => h === normalizeText('Unit'));
-
-  if (projectCol === -1 || unitCol === -1) return [];
-
-  const targetProject = normalizeText('C3 Garden Residence');
-  const units: string[] = [];
-
-  for (let i = 1; i < data.length; i++) {
-    const rowProject = normalizeText(data[i][projectCol]);
-    if (rowProject === targetProject) {
-      const unit = String(data[i][unitCol] || '').trim();
-      if (unit) units.push(unit);
-    }
-  }
-
-  return units;
-}
-
-export async function getC3UnitData(unitStr: string): Promise<any> {
-  const spreadsheetId = process.env.GOOGLE_SHEETS_CONFIG_ID;
-  if (!spreadsheetId) throw new Error('GOOGLE_SHEETS_CONFIG_ID not configured');
-
-  const data = await getSheetData(spreadsheetId, 'OBJECTS');
-  if (data.length < 2) throw new Error('OBJECTS tab is empty');
-
-  const headers = data[0].map(h => normalizeText(String(h || '').trim()));
-  const projectCol = headers.findIndex(h => h === normalizeText('Project Name'));
-  const unitCol = headers.findIndex(h => h === normalizeText('Unit'));
-  
-  const codeCol = headers.findIndex(h => h === normalizeText('Code'));
-  const typeCol = headers.findIndex(h => h === normalizeText('Type'));
-  const viewCol = headers.findIndex(h => h === normalizeText('View'));
-  const floorCol = headers.findIndex(h => h === normalizeText('Floor'));
-  const priceCol = headers.findIndex(h => h === normalizeText('Selling Price, AED'));
-  const areaCol = headers.findIndex(h => h === normalizeText('Area, m2'));
-  const rentalCol = headers.findIndex(h => h === normalizeText('Approx. rental rate'));
-
-  if (projectCol === -1 || unitCol === -1) throw new Error('Missing columns in OBJECTS');
-
-  const targetProject = normalizeText('C3 Garden Residence');
-  const targetUnit = String(unitStr).replace(/\u00A0/g, ' ').replace(/\s+/g, '').replace(/^#/, '').trim().toLowerCase();
-
-  for (let i = 1; i < data.length; i++) {
-    const rowProject = normalizeText(data[i][projectCol]);
-    const rowUnit = String(data[i][unitCol] || '').replace(/\u00A0/g, ' ').replace(/\s+/g, '').replace(/^#/, '').trim().toLowerCase();
-
-    if (rowProject === targetProject && rowUnit === targetUnit) {
-      const unitVal = String(data[i][unitCol] || '').trim();
-      let floorVal = floorCol !== -1 ? String(data[i][floorCol] || '').trim() : '';
-      if (!floorVal) {
-        // C3's Floor column is empty, so derive the floor from the unit number:
-        // G0x → Ground, otherwise the leading digit is the floor (101→1st, 203→2nd, ...).
-        const uv = unitVal.toUpperCase();
-        if (uv.startsWith('G')) {
-          floorVal = 'Ground Floor';
-        } else {
-          const firstDigit = parseInt(uv.replace(/\D/g, '').charAt(0), 10);
-          if (firstDigit >= 1) {
-            const ord = firstDigit === 1 ? '1st' : firstDigit === 2 ? '2nd' : firstDigit === 3 ? '3rd' : `${firstDigit}th`;
-            floorVal = `${ord} Floor`;
-          }
-        }
-      }
-
-      return {
-        objectType: 'Apartment',
-        project: 'C3 Garden Residence',
-        code: codeCol !== -1 ? String(data[i][codeCol] || '').trim() : '',
-        unit: unitVal,
-        type: typeCol !== -1 ? String(data[i][typeCol] || '').trim() : '',
-        view: viewCol !== -1 ? String(data[i][viewCol] || '').trim() : '',
-        floor: floorVal,
-        sellingPrice: priceCol !== -1 ? toNumber(String(data[i][priceCol] || '')) : '',
-        areaM2: areaCol !== -1 ? toNumber(String(data[i][areaCol] || '')) : '',
-        approxRentalRate: rentalCol !== -1 ? String(data[i][rentalCol] || '').trim() : '',
-        handover: 'Ready to move',
-        postType: 'READY_TO_MOVE'
-      };
-    }
-  }
-
-  return null;
-}
+// Данные юнитов C3 переехали из листа OBJECTS в базу — см. src/lib/c3/units.ts.
+// Из таблиц по C3 остался только setC3PostDate выше: дата поста в листе
+// «C3 Garden Res» — это отдельный ручной трекер, база его не заменяет.
 
 // ── WA QUEUE ─────────────────────────────────────────────────────────────────
 

@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getC3Units, getC3UnitData } from '@/lib/google/sheets';
+import { listC3UnitNumbers, getC3PostData, C3_PROJECT } from '@/lib/c3/units';
 import { findC3SlideByUnit } from '@/lib/google/drive';
 import { buildTelegramHtmlPost } from '@/lib/posts/templates';
 
-// Disable caching to always fetch fresh units from Google Sheets
+// Данные C3 берутся из базы вживую — кэшировать нечего.
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
   try {
-    const units = await getC3Units();
-    return NextResponse.json({ units });
+    return NextResponse.json({ units: await listC3UnitNumbers() });
   } catch (error: any) {
     console.error('Failed to get C3 units:', error);
     return NextResponse.json({ error: error.message || 'Failed to fetch units' }, { status: 500 });
@@ -24,15 +23,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unit is required' }, { status: 400 });
     }
 
-    const projectName = 'C3 Garden Residence';
-    
-    // 1. Get parsed data directly from config sheet
-    const parsed = await getC3UnitData(unit);
+    const parsed = await getC3PostData(unit);
     if (!parsed) {
-      return NextResponse.json({ error: `Data not found for unit ${unit} in OBJECTS sheet` }, { status: 404 });
+      return NextResponse.json({ error: `Юнит ${unit} не найден в базе среди доступных по ${C3_PROJECT}` }, { status: 404 });
     }
 
-    // 3. Find slide image on Google Drive
+    // Слайд лежит на Диске отдельным файлом, названным по номеру юнита.
     let slideDataUrl = '';
     try {
       slideDataUrl = await findC3SlideByUnit(unit);
@@ -40,18 +36,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Failed to find slide image: ${e.message}` }, { status: 404 });
     }
 
-    parsed.slideDataUrl = slideDataUrl;
-    parsed.slideName = `${unit}.jpg`;
+    const data: any = { ...parsed, slideDataUrl, slideName: `${unit}.jpg` };
+    const preview = await buildTelegramHtmlPost(data);
 
-    // 4. Build preview
-    const previewText = await buildTelegramHtmlPost(parsed);
-
-    return NextResponse.json({
-      parsed,
-      preview: previewText,
-      slideDataUrl
-    });
-
+    return NextResponse.json({ parsed: data, preview, slideDataUrl });
   } catch (error: any) {
     console.error('C3 Autopost error:', error);
     return NextResponse.json({ error: error.message || 'Failed to process request' }, { status: 500 });

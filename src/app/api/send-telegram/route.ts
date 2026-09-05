@@ -91,7 +91,7 @@ export async function POST(request: Request) {
     // У C3 строка ищется по номеру юнита, у остальных — по коду: у юнитов из
     // базы поле unit это положение дома («Middle»), а не номер.
     const isC3 = /c3 garden residence/i.test(String(data.project || ''));
-    const unitLabel = (isC3 ? data.unit || data.code : data.code || data.unit) || 'Unknown';
+    const unitLabel = (isC3 ? data.unitNumber || data.unit || data.code : data.code || data.unit) || 'Unknown';
     const r1 = await sendMediaGroupWithCaption(chatId, media, telegramHtml, unitLabel, isC3);
     mark('sendMediaGroup');
     const allIds: number[] = [...r1.ids];

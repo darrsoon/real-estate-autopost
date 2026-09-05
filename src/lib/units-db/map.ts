@@ -1,9 +1,12 @@
 import { RawUnit } from './units';
+import { formatNumberLikeSheet } from '../posts/formatters';
 
 // Handover string for the post: "Ready to move" for ready units, otherwise the
 // per-building handover date (falling back to the unit's own) as "Month YYYY".
+// Сданный с арендатором (ready_rented) — тоже готовый: дом стоит, ключи есть.
+// Без этого у таких юнитов строка Handover из поста просто пропадала.
 function formatHandover(raw: RawUnit): string {
-  if (raw.readiness === 'ready_vacant') return 'Ready to move';
+  if (raw.readiness === 'ready_vacant' || raw.readiness === 'ready_rented') return 'Ready to move';
   const d = raw.building_handover || raw.unit_handover;
   if (!d) return '';
   const dt = new Date(d);
@@ -28,6 +31,17 @@ const toPrice = (v: string | null): string | number => {
   return n === '' ? '' : Math.round(Number(n));
 };
 
+// Ставка аренды для строки «Approx. rental rate» в посте. В базе она лежит в
+// двух колонках: у свободного юнита это ожидаемая ставка (rental_yield_aed),
+// у сданного — сумма действующего договора (rental_amount_aed). В таблице это
+// была одна строка вида «250.000 AED/year» — её и собираем.
+function formatRentalRate(raw: RawUnit): string {
+  if (raw.approx_rental_rate) return raw.approx_rental_rate;
+  const v = raw.rental_yield_aed ?? raw.rental_amount_aed;
+  if (v == null || v === '' || !(Number(v) > 0)) return '';
+  return `${formatNumberLikeSheet(Math.round(Number(v)))} AED/year`;
+}
+
 // Map a raw units-DB row (+ our emoji) into the PostData shape the builders use.
 // postType is intentionally left out — the user always picks it in the UI.
 export function mapRawUnitToPostData(raw: RawUnit, emoji: string) {
@@ -50,7 +64,7 @@ export function mapRawUnitToPostData(raw: RawUnit, emoji: string) {
     originalPrice: toPrice(raw.original_price_aed),
     oldPrice: toPrice(raw.old_price_aed),
     sellingPrice: toPrice(raw.selling_price_aed),
-    approxRentalRate: raw.approx_rental_rate || '',
+    approxRentalRate: formatRentalRate(raw),
     paymentPlan: raw.payment_plan_label || '',
     rowName: raw.row_type || '',
     handover: formatHandover(raw),

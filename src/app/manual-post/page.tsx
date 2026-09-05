@@ -43,7 +43,7 @@ function ManualPostForm() {
   const [showTgSource, setShowTgSource] = useState(false);
   const [showWaSource, setShowWaSource] = useState(false);
 
-  // ── source: paste (Sheets), db (Neon), c3 (C3 autopost from Sheets+Drive) ──
+  // ── source: db (Neon), c3 (тот же Neon + слайд с Google Drive) ──
   const [source, setSource] = useState<'db' | 'c3'>('db');
   const [c3Units, setC3Units] = useState<string[]>([]);
   const [c3Unit, setC3Unit] = useState('');
@@ -113,7 +113,7 @@ function ManualPostForm() {
     setEmojiMissing(null);
   };
 
-  // Load C3 units (from Google Sheets) when switching to the C3 source
+  // Load C3 units (from the units DB) when switching to the C3 source
   useEffect(() => {
     if (source !== 'c3' || c3Units.length) return;
     fetch('/api/c3-autopost')
@@ -411,7 +411,7 @@ function ManualPostForm() {
 
               {source === 'c3' && (
                 <div>
-                  <label className="block text-sm font-medium bb-ink-2 mb-2">Юнит C3 (из Google-таблицы)</label>
+                  <label className="block text-sm font-medium bb-ink-2 mb-2">Юнит C3 (из базы)</label>
                   <select
                     value={c3Unit}
                     onChange={e => pickC3Unit(e.target.value)}
