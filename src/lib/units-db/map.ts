@@ -65,6 +65,9 @@ export function mapRawUnitToPostData(raw: RawUnit, emoji: string) {
     oldPrice: toPrice(raw.old_price_aed),
     sellingPrice: toPrice(raw.selling_price_aed),
     approxRentalRate: formatRentalRate(raw),
+    // Юнит сдан: в посте вместо ожидаемой ставки идёт «Rented till August 2027».
+    isRented: raw.readiness === 'ready_rented',
+    rentedUntil: raw.rented_until_label || '',
     paymentPlan: raw.payment_plan_label || '',
     rowName: raw.row_type || '',
     handover: formatHandover(raw),

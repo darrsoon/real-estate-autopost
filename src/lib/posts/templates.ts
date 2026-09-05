@@ -16,6 +16,8 @@ export interface PostData {
   objectType?: string;
   code?: string;
   unit?: string;
+  isRented?: boolean;
+  rentedUntil?: string;
   // Номер квартиры. У виллы в `unit` лежит положение дома в ряду, поэтому номер
   // хранится отдельно — по нему ищут слайд C3 и строку в листе «C3 Garden Res».
   unitNumber?: string;
@@ -39,6 +41,11 @@ export interface PostData {
   // builders берут остров и смайлик проекта из базы.
   island?: string;
   emoji?: string;
+}
+
+// «Rented till August 2027», а без даты — просто «Rented».
+function rentedLabel(data: any): string {
+  return data.rentedUntil ? `Rented till ${data.rentedUntil}` : 'Rented';
 }
 
 export async function buildTelegramHtmlPost(data: any) {
@@ -95,8 +102,14 @@ async function buildApartmentPostText(data: any) {
     text += '<i><u>Old price:</u> <s>' + escapeHtml(formatNumberLikeSheet(data.oldPrice)) + ' AED</s></i>\n';
   }
 
-  if (normalizeText(data.project) === normalizeText('C3 Garden Residence') && data.approxRentalRate) {
-    text += '<u>Approx. rental rate:</u> ' + escapeHtml(data.approxRentalRate) + '\n';
+  if (normalizeText(data.project) === normalizeText('C3 Garden Residence')) {
+    // У сданного юнита ожидаемая ставка неинтересна — важно, до какого месяца
+    // он занят. Даты может не быть — тогда просто «Rented».
+    if (data.isRented) {
+      text += '<u>' + escapeHtml(rentedLabel(data)) + '</u>\n';
+    } else if (data.approxRentalRate) {
+      text += '<u>Approx. rental rate:</u> ' + escapeHtml(data.approxRentalRate) + '\n';
+    }
   }
 
   text += '<b><u>Selling Price:</u> ' + escapeHtml(formatNumberLikeSheet(data.sellingPrice)) + ' AED</b>\n\n';
@@ -222,8 +235,12 @@ async function buildApartmentWhatsAppPostText(data: any) {
     text += '_Old price: ~' + formatNumberLikeSheet(data.oldPrice) + ' AED~_\n';
   }
 
-  if (normalizeText(data.project) === normalizeText('C3 Garden Residence') && data.approxRentalRate) {
-    text += 'Approx. rental rate: ' + data.approxRentalRate + '\n';
+  if (normalizeText(data.project) === normalizeText('C3 Garden Residence')) {
+    if (data.isRented) {
+      text += rentedLabel(data) + '\n';
+    } else if (data.approxRentalRate) {
+      text += 'Approx. rental rate: ' + data.approxRentalRate + '\n';
+    }
   }
 
   text += '*Selling Price: ' + formatNumberLikeSheet(data.sellingPrice) + ' AED*\n\n';

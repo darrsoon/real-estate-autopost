@@ -148,6 +148,9 @@ export interface RawUnit {
   approx_rental_rate: string | null;
   rental_yield_aed: string | null;
   rental_amount_aed: string | null;
+  // Готовая подпись «August 2027»: месяц собираем в SQL, иначе Postgres отдаёт
+  // дату полуночью UTC и в другом часовом поясе она съезжает на день назад.
+  rented_until_label: string | null;
   payment_plan_label: string | null;
   readiness: string | null;
   row_type: string | null;
@@ -168,6 +171,7 @@ export async function listAllAvailableUnits(): Promise<RawUnit[]> {
         u.area_sqm, u.gross_area_sqm, u.plot_area_sqm,
         u.original_price_aed, u.old_price_aed, u.selling_price_aed,
         u.approx_rental_rate, u.rental_yield_aed, u.rental_amount_aed,
+        to_char(u.rented_until, 'FMMonth YYYY') AS rented_until_label,
         u.payment_plan_label, u.readiness::text AS readiness,
         u.row_type, u.unit_position,
         u.handover_date AS unit_handover,
@@ -197,6 +201,7 @@ export async function listAvailableUnits(projectName: string): Promise<RawUnit[]
         u.area_sqm, u.gross_area_sqm, u.plot_area_sqm,
         u.original_price_aed, u.old_price_aed, u.selling_price_aed,
         u.approx_rental_rate, u.rental_yield_aed, u.rental_amount_aed,
+        to_char(u.rented_until, 'FMMonth YYYY') AS rented_until_label,
         u.payment_plan_label, u.readiness::text AS readiness,
         u.row_type, u.unit_position,
         u.handover_date AS unit_handover,
@@ -227,6 +232,7 @@ export async function listQuickSaleUnits(): Promise<RawUnit[]> {
         u.area_sqm, u.gross_area_sqm, u.plot_area_sqm,
         u.original_price_aed, u.old_price_aed, u.selling_price_aed,
         u.approx_rental_rate, u.rental_yield_aed, u.rental_amount_aed,
+        to_char(u.rented_until, 'FMMonth YYYY') AS rented_until_label,
         u.payment_plan_label, u.readiness::text AS readiness,
         u.row_type, u.unit_position,
         u.handover_date AS unit_handover,
@@ -257,6 +263,7 @@ export async function getUnitByNumber(projectName: string, unitNumber: string): 
         u.area_sqm, u.gross_area_sqm, u.plot_area_sqm,
         u.original_price_aed, u.old_price_aed, u.selling_price_aed,
         u.approx_rental_rate, u.rental_yield_aed, u.rental_amount_aed,
+        to_char(u.rented_until, 'FMMonth YYYY') AS rented_until_label,
         u.payment_plan_label, u.readiness::text AS readiness,
         u.row_type, u.unit_position,
         u.handover_date AS unit_handover,
@@ -287,6 +294,7 @@ export async function getRawUnit(id: string): Promise<RawUnit | null> {
         u.area_sqm, u.gross_area_sqm, u.plot_area_sqm,
         u.original_price_aed, u.old_price_aed, u.selling_price_aed,
         u.approx_rental_rate, u.rental_yield_aed, u.rental_amount_aed,
+        to_char(u.rented_until, 'FMMonth YYYY') AS rented_until_label,
         u.payment_plan_label, u.readiness::text AS readiness,
         u.row_type, u.unit_position,
         u.handover_date AS unit_handover,
