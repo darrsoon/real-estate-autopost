@@ -48,6 +48,12 @@ function rentedLabel(data: any): string {
   return data.rentedUntil ? `Rented till ${data.rentedUntil}` : 'Rented';
 }
 
+// Целиком строка про сданный юнит: до какого месяца занят и за сколько сдан.
+// Без суммы остаётся один срок — «Rented till August 2027».
+function rentedLine(data: any): { label: string; rate: string } {
+  return { label: rentedLabel(data), rate: data.approxRentalRate || '' };
+}
+
 export async function buildTelegramHtmlPost(data: any) {
   if (isVillaObject(data.objectType)) {
     return buildVillaPostText(data);
@@ -106,7 +112,10 @@ async function buildApartmentPostText(data: any) {
     // У сданного юнита ожидаемая ставка неинтересна — важно, до какого месяца
     // он занят. Даты может не быть — тогда просто «Rented».
     if (data.isRented) {
-      text += '<u>' + escapeHtml(rentedLabel(data)) + '</u>\n';
+      const r = rentedLine(data);
+      text += r.rate
+        ? '<u>' + escapeHtml(r.label) + ':</u> ' + escapeHtml(r.rate) + '\n'
+        : '<u>' + escapeHtml(r.label) + '</u>\n';
     } else if (data.approxRentalRate) {
       text += '<u>Approx. rental rate:</u> ' + escapeHtml(data.approxRentalRate) + '\n';
     }
@@ -237,7 +246,8 @@ async function buildApartmentWhatsAppPostText(data: any) {
 
   if (normalizeText(data.project) === normalizeText('C3 Garden Residence')) {
     if (data.isRented) {
-      text += rentedLabel(data) + '\n';
+      const r = rentedLine(data);
+      text += (r.rate ? `${r.label}: ${r.rate}` : r.label) + '\n';
     } else if (data.approxRentalRate) {
       text += 'Approx. rental rate: ' + data.approxRentalRate + '\n';
     }
