@@ -4,6 +4,11 @@
 // есть постоянный id.
 //
 // Картинка по-прежнему лежит в Google Drive, в базе только её id.
+//
+// С 07.09.2026: запись знает ещё и про свою публикацию в Telegram-канал
+// (tg_main_ids/tg_review_chatid — какие сообщения в чате-модераторе форварднуть,
+// tg_sent — уже форварднули или нет) — это нужно, чтобы крон по расписанию мог
+// отправить пост САМ и в TG-канал, и в WhatsApp, а не только в WhatsApp.
 import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.META_DB_URL!);
@@ -19,6 +24,14 @@ export interface WaQueueItem {
   status: string;
   /** Чат конкретного поста; пусто — общий чат из настроек. */
   item_chatid: string;
+  /** ID сообщений в чате-модераторе (через запятую) — их форвардим в TG-канал. */
+  tg_main_ids: string;
+  /** Чат-модератор, где лежат tg_main_ids (обычно TELEGRAM_REVIEW_CHAT_ID). */
+  tg_review_chatid: string;
+  /** Уже отправлено в TG-канал (крон это уже сделал или нечего было слать). */
+  tg_sent: boolean;
+  /** Уже отправлено в WhatsApp (крон это уже сделал). */
+  wa_sent: boolean;
 }
 
 export interface WaQueueConfig {
@@ -30,19 +43,24 @@ function ensureTables() {
   ready ??= (async () => {
     await sql`
       CREATE TABLE IF NOT EXISTS wa_queue (
-        id            text PRIMARY KEY,
-        created_at    timestamptz NOT NULL DEFAULT now(),
-        label         text NOT NULL DEFAULT '',
-        wa_text       text NOT NULL DEFAULT '',
+        id text PRIMARY KEY,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        label text NOT NULL DEFAULT '',
+        wa_text text NOT NULL DEFAULT '',
         drive_file_id text NOT NULL DEFAULT '',
-        scheduled_at  text NOT NULL DEFAULT '',
-        status        text NOT NULL DEFAULT 'WAITING',
-        item_chatid   text NOT NULL DEFAULT ''
+        scheduled_at text NOT NULL DEFAULT '',
+        status text NOT NULL DEFAULT 'WAITING',
+        item_chatid text NOT NULL DEFAULT ''
       )
     `;
+    // Догоняем схему для баз, созданных до фичи «TG-канал + WA по расписанию».
+    await sql`ALTER TABLE wa_queue ADD COLUMN IF NOT EXISTS tg_main_ids text NOT NULL DEFAULT ''`;
+    await sql`ALTER TABLE wa_queue ADD COLUMN IF NOT EXISTS tg_review_chatid text NOT NULL DEFAULT ''`;
+    await sql`ALTER TABLE wa_queue ADD COLUMN IF NOT EXISTS tg_sent boolean NOT NULL DEFAULT false`;
+    await sql`ALTER TABLE wa_queue ADD COLUMN IF NOT EXISTS wa_sent boolean NOT NULL DEFAULT false`;
     await sql`
       CREATE TABLE IF NOT EXISTS wa_queue_settings (
-        key   text PRIMARY KEY,
+        key text PRIMARY KEY,
         value text NOT NULL
       )
     `;
@@ -60,6 +78,10 @@ function toItem(r: any): WaQueueItem {
     scheduled_at: r.scheduled_at ?? '',
     status: r.status || 'WAITING',
     item_chatid: r.item_chatid ?? '',
+    tg_main_ids: r.tg_main_ids ?? '',
+    tg_review_chatid: r.tg_review_chatid ?? '',
+    tg_sent: !!r.tg_sent,
+    wa_sent: !!r.wa_sent,
   };
 }
 
@@ -81,6 +103,8 @@ export async function addWaQueueItem(
   driveFileId: string,
   scheduledAt = '',
   itemChatId = '',
+  tgMainIds: number[] = [],
+  tgReviewChatId = '',
 ): Promise<string> {
   await ensureTables();
   // id — это метка времени, и он же первичный ключ. Рассылка добавляет посты
@@ -90,8 +114,8 @@ export async function addWaQueueItem(
   let id = Date.now();
   for (let attempt = 0; attempt < 20; attempt++) {
     const rows = (await sql`
-      INSERT INTO wa_queue (id, label, wa_text, drive_file_id, scheduled_at, status, item_chatid)
-      VALUES (${String(id)}, ${label}, ${waText}, ${driveFileId}, ${scheduledAt}, 'WAITING', ${itemChatId})
+      INSERT INTO wa_queue (id, label, wa_text, drive_file_id, scheduled_at, status, item_chatid, tg_main_ids, tg_review_chatid)
+      VALUES (${String(id)}, ${label}, ${waText}, ${driveFileId}, ${scheduledAt}, 'WAITING', ${itemChatId}, ${tgMainIds.join(',')}, ${tgReviewChatId})
       ON CONFLICT (id) DO NOTHING
       RETURNING id
     `) as any[];
@@ -109,6 +133,13 @@ export async function updateWaQueueItemStatus(id: string, status: string) {
 export async function updateWaQueueItemSchedule(id: string, scheduledAt: string) {
   await ensureTables();
   await sql`UPDATE wa_queue SET scheduled_at = ${scheduledAt} WHERE id = ${id}`;
+}
+
+/** Отмечает канал(ы) как уже отправленные — не трогая остальные поля. */
+export async function markWaQueueItemSent(id: string, fields: { wa?: boolean; tg?: boolean }) {
+  await ensureTables();
+  if (fields.wa) await sql`UPDATE wa_queue SET wa_sent = true WHERE id = ${id}`;
+  if (fields.tg) await sql`UPDATE wa_queue SET tg_sent = true WHERE id = ${id}`;
 }
 
 /** Удаляет одну запись. true — если она существовала. */
