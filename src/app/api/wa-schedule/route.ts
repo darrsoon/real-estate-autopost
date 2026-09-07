@@ -5,9 +5,11 @@ import {
   updateWaQueueConfig,
   deleteWaQueueItemById,
   deleteWaQueueItems,
+  markWaQueueItemSent,
 } from '@/lib/wa-queue/store';
 import { dispatchWaItem } from '@/lib/whatsapp/dispatch';
 import { getInstanceState } from '@/lib/whatsapp/green-api';
+import { forwardToChannel } from '@/lib/telegram/mtproto';
 
 // Отправка одного поста тянет фото из Drive и грузит его в Green API —
 // дефолтных секунд на это не хватает.
@@ -34,28 +36,61 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    // Manually send one post right now, then remove it from the queue
+    // Manually send one post right now (both TG channel + WhatsApp), then
+    // remove it from the queue. Каждый канал отмечается своим флагом
+    // (tg_sent/wa_sent) — как и в кроне, чтобы повторное нажатие «Отправить»
+    // после частичной ошибки не задвоило уже ушедший канал.
     if (body.action === 'send-one') {
       const { id } = body as { id: string };
       const { config, items } = await getWaQueue();
-      if (!config.wa_chatid) return NextResponse.json({ error: 'Chat ID не настроен' }, { status: 400 });
-
       const item = items.find(i => i.id === id);
       if (!item) return NextResponse.json({ error: 'Пост не найден' }, { status: 404 });
 
+      const warnings: string[] = [];
+
+      // ── Telegram-канал ────────────────────────────────────────────────
+      if (!item.tg_sent) {
+        const mainIds = item.tg_main_ids ? item.tg_main_ids.split(',').map(Number).filter(Boolean) : [];
+        const fromChat = item.tg_review_chatid || process.env.TELEGRAM_REVIEW_CHAT_ID;
+        const channelId = process.env.TELEGRAM_CHANNEL_ID;
+        if (mainIds.length && fromChat && channelId) {
+          try {
+            await forwardToChannel(fromChat, mainIds, channelId);
+            await markWaQueueItemSent(id, { tg: true });
+          } catch (e: any) {
+            warnings.push(`TG-канал: ${e.message}`);
+          }
+        } else {
+          // Нечего форвардить (старый пост до этой доработки, или TG не
+          // настроен) — не блокируем ручную отправку WhatsApp из-за этого.
+          await markWaQueueItemSent(id, { tg: true });
+        }
+      }
+
+      // ── WhatsApp ─────────────────────────────────────────────────────
+      if (!config.wa_chatid) return NextResponse.json({ error: 'Chat ID не настроен', warnings }, { status: 400 });
+
       const state = await getInstanceState().catch(() => 'unknown');
       if (state !== 'authorized') {
-        return NextResponse.json({ error: `WhatsApp не готов (статус: ${state}). Отправка заблокирована.` }, { status: 409 });
+        return NextResponse.json({ error: `WhatsApp не готов (статус: ${state}). Отправка заблокирована.`, warnings }, { status: 409 });
       }
 
       try {
-        await dispatchWaItem(item, config.wa_chatid);
+        await dispatchWaItem(item, item.item_chatid || config.wa_chatid);
+        await markWaQueueItemSent(id, { wa: true });
       } catch (e: any) {
         const detail = e?.response?.data ? JSON.stringify(e.response.data) : e.message;
-        return NextResponse.json({ error: detail }, { status: 500 });
+        return NextResponse.json({ error: detail, warnings }, { status: 500 });
       }
-      await deleteWaQueueItemById(id);
-      return NextResponse.json({ ok: true });
+
+      // Удаляем только когда оба канала подтверждены (перечитываем — на
+      // случай, если TG форварднулся только что).
+      const fresh = (await getWaQueue()).items.find(i => i.id === id);
+      if (fresh && fresh.tg_sent && fresh.wa_sent) {
+        await deleteWaQueueItemById(id);
+      }
+
+      return NextResponse.json({ ok: true, warnings: warnings.length ? warnings : undefined });
     }
 
     // Delete a post from the queue without sending
