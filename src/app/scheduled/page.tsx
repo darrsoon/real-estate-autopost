@@ -105,7 +105,10 @@ export default function ScheduledPage() {
     setConfirmSendId(null);
     setBusyId(item.id);
     try {
-      await postAction({ action: 'send-one', id: item.id });
+      const data = await postAction({ action: 'send-one', id: item.id });
+      if (data?.warnings?.length) {
+        setErrorMsg('Отправлено, но есть предупреждение: ' + data.warnings.join('; '));
+      }
       await load();
     } catch (e: any) {
       setErrorMsg('Ошибка отправки: ' + e.message);
@@ -183,7 +186,7 @@ export default function ScheduledPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight mb-1" style={{ color: 'var(--ink-900)' }}>Расписание WA</h1>
         <p className="bb-ink-3 text-sm">
-          Посты попадают сюда после «Send to Telegram». Задай время по Дубаю — пост уйдёт сам. Или отправь/удали вручную.
+          Посты попадают сюда после «Send to Telegram». Задай время по Дубаю — пост сам уйдёт и в TG-канал, и в WhatsApp. Кнопка «Отправить» — то же самое, но прямо сейчас, не дожидаясь времени.
         </p>
       </div>
 
@@ -202,7 +205,7 @@ export default function ScheduledPage() {
 
       {!isReady && (
         <div className="px-4 py-3 rounded-2xl bb-tint-warn border bb-edge bb-warn/90 text-xs leading-relaxed">
-          ⚠️ Пока WhatsApp не в статусе 🟢 «Авторизован», отправка заблокирована (и ручная, и автоматическая) — чтобы не усугублять блокировку. Переждите ограничение и не шлите тесты.
+          ⚠️ Пока WhatsApp не в статусе 🟢 «Авторизован», отправка в WhatsApp заблокирована (и ручная, и автоматическая) — чтобы не усугублять блокировку. Переждите ограничение и не шлите тесты. На TG-канал по расписанию это не влияет — он уйдёт всё равно.
         </div>
       )}
 
@@ -356,7 +359,7 @@ export default function ScheduledPage() {
 
                 {item.scheduled_at && (
                   <p className="text-[10px] bb-ok/80">
-                    Уйдёт автоматически: <strong>{item.scheduled_at}</strong> (по Дубаю)
+                    Уйдёт автоматически (TG-канал + WhatsApp): <strong>{item.scheduled_at}</strong> (по Дубаю)
                   </p>
                 )}
               </div>
