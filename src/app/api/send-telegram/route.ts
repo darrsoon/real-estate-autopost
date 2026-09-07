@@ -40,10 +40,13 @@ export async function POST(request: Request) {
       allIds.push(...r2.ids);
 
       // Queue first: the WA button needs the queue item's id to be unambiguous.
+      // Заодно кладём в очередь id сообщений в чате-модераторе (r1.mainIds) и
+      // сам чат — если поставят время в «Расписании WA», крон сможет
+      // форварднуть именно эти сообщения в TG-канал, а не только отправить WA.
       let waQueueId = '';
       try {
         const label = `PRICE_CHANGE – ${data.code || data.unit || '?'} in ${data.project}`;
-        waQueueId = await addWaQueueItem(label, whatsappText, '');
+        waQueueId = await addWaQueueItem(label, whatsappText, '', '', '', r1.mainIds, chatId);
       } catch (e) {
         console.error('WA queue save error (price change):', e);
       }
@@ -91,7 +94,7 @@ export async function POST(request: Request) {
     // У C3 строка ищется по номеру юнита, у остальных — по коду: у юнитов из
     // базы поле unit это положение дома («Middle»), а не номер.
     const isC3 = /c3 garden residence/i.test(String(data.project || ''));
-    const unitLabel = (isC3 ? data.unitNumber || data.unit || data.code : data.code || data.unit) || 'Unknown';
+    const unitLabel = (isC3 ? data.unit || data.code : data.code || data.unit) || 'Unknown';
     const r1 = await sendMediaGroupWithCaption(chatId, media, telegramHtml, unitLabel, isC3);
     mark('sendMediaGroup');
     const allIds: number[] = [...r1.ids];
@@ -101,12 +104,15 @@ export async function POST(request: Request) {
     allIds.push(...r2.ids);
 
     // Queue first: the WA button needs the queue item's id to be unambiguous.
+    // Заодно кладём в очередь id сообщений в чате-модераторе (r1.mainIds) и
+    // сам чат — если поставят время в «Расписании WA», крон сможет
+    // форварднуть именно эти сообщения в TG-канал, а не только отправить WA.
     let waQueueId = '';
     try {
       const label = `${data.postType} – ${data.code || data.unit || '?'} in ${data.project}`;
       const filename = `wa_${Date.now()}.jpg`;
       const driveFileId = await uploadToWaQueue(slideBuffer, filename);
-      waQueueId = await addWaQueueItem(label, whatsappText, driveFileId);
+      waQueueId = await addWaQueueItem(label, whatsappText, driveFileId, '', '', r1.mainIds, chatId);
       mark('очередь WA');
     } catch (e) {
       console.error('WA queue save error:', e);
