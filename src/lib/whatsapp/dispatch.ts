@@ -1,12 +1,16 @@
 import { WaQueueItem } from '../wa-queue/store';
 import { downloadFromDrive } from '../google/drive';
-import { sendWhatsAppImage, sendWhatsAppText } from './green-api';
+import { sendWhatsAppImage, sendWhatsAppText, sendWhatsAppFile } from './green-api';
 
-// Sends one queue item to the given WhatsApp chat (image + caption, or text only).
+// Sends one queue item to the given WhatsApp chat (image + caption, video + caption, or text only).
 export async function dispatchWaItem(item: WaQueueItem, chatId: string): Promise<void> {
   if (item.drive_file_id) {
     const buf = await downloadFromDrive(item.drive_file_id);
-    await sendWhatsAppImage(chatId, buf, item.wa_text);
+    if (item.media_type === 'video') {
+      await sendWhatsAppFile(chatId, buf, item.wa_text, 'news.mp4', 'video/mp4');
+    } else {
+      await sendWhatsAppImage(chatId, buf, item.wa_text);
+    }
   } else {
     await sendWhatsAppText(chatId, item.wa_text);
   }
