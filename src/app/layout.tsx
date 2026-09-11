@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Nunito } from 'next/font/google';
 import './globals.css';
 import AppShell from '@/components/AppShell';
+import { getSession } from '@/lib/auth/session';
 
 // Круглый дружелюбный гротеск — на нём держится вся «мультяшность».
 const nunito = Nunito({
@@ -29,18 +30,27 @@ const navItems = [
   { href: '/news', label: 'Новости', icon: '📰' },
 ];
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getSession();
+  const items = [...navItems];
+  if (session?.role === 'admin') {
+    items.push({ href: '/admin/users', label: 'Пользователи', icon: '👤' });
+  }
+  if (session) {
+    items.push({ href: '/logout', label: 'Выйти', icon: '🚪' });
+  }
+
   return (
     <html lang="ru">
       <body
         className={`${nunito.variable} font-sans antialiased`}
         style={{ background: 'var(--sky-100)', color: 'var(--ink-900)' }}
       >
-        <AppShell items={navItems}>{children}</AppShell>
+        <AppShell items={items}>{children}</AppShell>
       </body>
     </html>
   );
