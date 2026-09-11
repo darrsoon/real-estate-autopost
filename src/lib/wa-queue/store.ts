@@ -9,6 +9,9 @@
 // (tg_main_ids/tg_review_chatid — какие сообщения в чате-модераторе форварднуть,
 // tg_sent — уже форварднули или нет) — это нужно, чтобы крон по расписанию мог
 // отправить пост САМ и в TG-канал, и в WhatsApp, а не только в WhatsApp.
+//
+// С 11.09.2026: добавлен media_type ('image' | 'video') — фиче «Новости»
+// нужно уметь класть в очередь видео, а не только фото, как у обычных Постов.
 import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.META_DB_URL!);
@@ -32,6 +35,8 @@ export interface WaQueueItem {
   tg_sent: boolean;
   /** Уже отправлено в WhatsApp (крон это уже сделал). */
   wa_sent: boolean;
+  /** 'image' | 'video' — как слать drive_file_id в WhatsApp. */
+  media_type: string;
 }
 
 export interface WaQueueConfig {
@@ -58,6 +63,7 @@ function ensureTables() {
     await sql`ALTER TABLE wa_queue ADD COLUMN IF NOT EXISTS tg_review_chatid text NOT NULL DEFAULT ''`;
     await sql`ALTER TABLE wa_queue ADD COLUMN IF NOT EXISTS tg_sent boolean NOT NULL DEFAULT false`;
     await sql`ALTER TABLE wa_queue ADD COLUMN IF NOT EXISTS wa_sent boolean NOT NULL DEFAULT false`;
+    await sql`ALTER TABLE wa_queue ADD COLUMN IF NOT EXISTS media_type text NOT NULL DEFAULT 'image'`;
     await sql`
       CREATE TABLE IF NOT EXISTS wa_queue_settings (
         key text PRIMARY KEY,
@@ -82,6 +88,7 @@ function toItem(r: any): WaQueueItem {
     tg_review_chatid: r.tg_review_chatid ?? '',
     tg_sent: !!r.tg_sent,
     wa_sent: !!r.wa_sent,
+    media_type: r.media_type || 'image',
   };
 }
 
@@ -105,6 +112,7 @@ export async function addWaQueueItem(
   itemChatId = '',
   tgMainIds: number[] = [],
   tgReviewChatId = '',
+  mediaType = 'image',
 ): Promise<string> {
   await ensureTables();
   // id — это метка времени, и он же первичный ключ. Рассылка добавляет посты
@@ -114,8 +122,8 @@ export async function addWaQueueItem(
   let id = Date.now();
   for (let attempt = 0; attempt < 20; attempt++) {
     const rows = (await sql`
-      INSERT INTO wa_queue (id, label, wa_text, drive_file_id, scheduled_at, status, item_chatid, tg_main_ids, tg_review_chatid)
-      VALUES (${String(id)}, ${label}, ${waText}, ${driveFileId}, ${scheduledAt}, 'WAITING', ${itemChatId}, ${tgMainIds.join(',')}, ${tgReviewChatId})
+      INSERT INTO wa_queue (id, label, wa_text, drive_file_id, scheduled_at, status, item_chatid, tg_main_ids, tg_review_chatid, media_type)
+      VALUES (${String(id)}, ${label}, ${waText}, ${driveFileId}, ${scheduledAt}, 'WAITING', ${itemChatId}, ${tgMainIds.join(',')}, ${tgReviewChatId}, ${mediaType})
       ON CONFLICT (id) DO NOTHING
       RETURNING id
     `) as any[];
