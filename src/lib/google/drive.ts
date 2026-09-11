@@ -187,14 +187,14 @@ async function findOrCreateWaQueueFolder(): Promise<string> {
   return _waQueueFolderId;
 }
 
-export async function uploadToWaQueue(buffer: Buffer, filename: string): Promise<string> {
+export async function uploadToWaQueue(buffer: Buffer, filename: string, mimeType = 'image/jpeg'): Promise<string> {
   const drive = await getGoogleDriveClient();
   const folderId = await findOrCreateWaQueueFolder();
   const { Readable } = await import('stream');
 
   const file = await drive.files.create({
     requestBody: { name: filename, parents: [folderId] },
-    media: { mimeType: 'image/jpeg', body: Readable.from(buffer) },
+    media: { mimeType, body: Readable.from(buffer) },
     fields: 'id',
   });
 
