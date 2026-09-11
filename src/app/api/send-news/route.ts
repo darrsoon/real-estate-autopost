@@ -28,6 +28,9 @@ export async function POST(request: Request) {
     const blobUrl: string | undefined = body.blobUrl;
     const mediaType: 'image' | 'video' | undefined = body.mediaType;
     const fileName: string = body.fileName || (mediaType === 'video' ? 'news.mp4' : 'news.jpg');
+    // «YYYY-MM-DD HH:MM» по Дубаю, уже сконвертировано на клиенте; пусто — без расписания
+    // (тогда время ставится позже на странице «Расписание WA», как и раньше).
+    const scheduledAt: string = body.scheduledAt || '';
 
     if (!text) throw new Error('Текст новости обязателен');
 
@@ -60,12 +63,16 @@ export async function POST(request: Request) {
     }
 
     const label = `NEWS – ${text.replace(/\s+/g, ' ').slice(0, 60)}`;
+    // itemChatId оставляем пустым — Даша подтвердила, что для новостей нет
+    // отдельной WA-группы, они уходят в ту же группу, что и обычные Посты.
+    // Крон (`/api/cron/wa-send`) сам подставит общий config.wa_chatid, когда
+    // item_chatid пуст — см. src/app/api/cron/wa-send/route.ts.
     const waQueueId = await addWaQueueItem(
       label,
       whatsappText,
       driveFileId,
+      scheduledAt,
       '',
-      process.env.NEWS_WA_GROUP_CHATID || '',
       r1.mainIds,
       chatId,
       mediaType || 'image',
