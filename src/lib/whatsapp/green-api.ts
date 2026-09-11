@@ -33,3 +33,24 @@ export async function sendWhatsAppImage(
   });
   return res.data;
 }
+
+// Общая отправка файла (фото/видео/что угодно) — нужна Новостям, где заранее
+// не известен тип медиа. sendWhatsAppImage оставлен как есть — на него
+// завязаны существующие Посты, жёстко шлющие image/jpeg.
+export async function sendWhatsAppFile(
+  chatId: string,
+  buffer: Buffer,
+  caption: string,
+  filename: string,
+  contentType: string,
+) {
+  const form = new FormData();
+  form.append('chatId', chatId);
+  form.append('caption', caption);
+  form.append('file', buffer, { filename, contentType });
+
+  const res = await axios.post(url('sendFileByUpload'), form, {
+    headers: form.getHeaders(),
+  });
+  return res.data;
+}
