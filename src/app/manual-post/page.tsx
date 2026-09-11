@@ -42,6 +42,7 @@ function ManualPostForm() {
   // Раскрытые исходники занимают пол-экрана — держим их свёрнутыми, пока не понадобится правка.
   const [showTgSource, setShowTgSource] = useState(false);
   const [showWaSource, setShowWaSource] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState('');
 
   // ── source: db (Neon), c3 (тот же Neon + слайд с Google Drive) ──
   const [source, setSource] = useState<'db' | 'c3'>('db');
@@ -178,10 +179,11 @@ function ManualPostForm() {
     setSending(true);
     try {
       const payload = { ...parsedData, postType, project };
+      const scheduledAtValue = scheduledAt ? scheduledAt.replace('T', ' ').slice(0, 16) : '';
       const res = await fetch('/api/send-telegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: payload, telegramHtmlOverride: editableTgHtml || undefined, whatsappTextOverride: editableWaText || undefined })
+        body: JSON.stringify({ data: payload, telegramHtmlOverride: editableTgHtml || undefined, whatsappTextOverride: editableWaText || undefined, scheduledAt: scheduledAtValue })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -193,6 +195,7 @@ function ManualPostForm() {
       setPostPreview('');
       setOldPostsResult(null);
       setProject('');
+      setScheduledAt('');
     } catch (e: any) {
       alert(e.message);
     } finally {
@@ -721,6 +724,19 @@ function ManualPostForm() {
                   )}
                 </div>
               )}
+            </div>
+
+            <div className="pt-4 border-t bb-edge">
+              <label className="block text-sm font-medium bb-ink-2 mb-2">⏰ Время отправки (Дубай, необязательно)</label>
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={e => setScheduledAt(e.target.value)}
+                className="px-3 py-2 bb-surface-soft border bb-edge rounded-xl text-sm bb-ink outline-none focus:ring-2 focus:bb-ring"
+              />
+              <p className="text-[11px] bb-ink-4 mt-1">
+                Не заполнено — время можно будет поставить позже на странице «Расписание WA».
+              </p>
             </div>
 
             <button
