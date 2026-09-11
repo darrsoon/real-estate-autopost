@@ -25,6 +25,7 @@ const navItems = [
   { href: '/project-emoji', label: 'Проекты', icon: '🎨' },
   { href: '/no-posts', label: 'Юниты без постов', icon: '📝' },
   { href: '/broker-check', label: 'Сверка брокеров', icon: '🤝' },
+  { href: '/stories', label: 'Сторис Наташе', icon: '📸' },
 ];
 
 export default function RootLayout({
