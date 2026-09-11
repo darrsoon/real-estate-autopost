@@ -136,3 +136,73 @@ export async function sendPhoto(chatId: string, source: Buffer, caption: string)
   const msg = await bot.telegram.sendPhoto(chatId, { source }, { caption });
   return { msg, ids: [msg.message_id] };
 }
+
+
+// ── Новости: черновик без привязки к юниту ──────────────────────────────
+// В отличие от Постов, у Новости нет кода юнита и нет строки в Google-листе,
+// поэтому кнопка «✅ Approved» тут не нужна — только доставка (WA/TG-канал)
+// и удаление черновика. delete_/wa_/tg_ в вебхуке уже полностью общие (не
+// завязаны на данные юнита, читают ids/main_ids из текста сообщения), так
+// что их можно переиспользовать как есть — суффикс после wa_ важен (должен
+// быть id записи в очереди WA), суффиксы delete_/tg_ вебхук не смотрит.
+function newsReviewKeyboard(waQueueId?: string) {
+  return {
+    inline_keyboard: [
+      [
+        { text: '📲 WA', callback_data: `wa_${waQueueId || 'news'}` },
+        { text: '✈️ TG канал', callback_data: 'tg_news' },
+      ],
+      [
+        { text: '🗑 Удалить', callback_data: 'delete_news' },
+      ],
+    ],
+  };
+}
+
+// Черновик Новости: фото/видео (если есть) или просто текст + отдельное
+// сообщение-«шапка» с кнопками — тот же паттерн, что sendMediaGroupWithCaption
+// у Постов (ids/main_ids кладём в текст шапки, а не в callback_data).
+export async function sendNewsDraft(
+  chatId: string,
+  media: { type: 'photo' | 'video'; source: Buffer } | null,
+  captionHtml: string,
+) {
+  const bot = getBot();
+  let mainIds: number[];
+
+  if (media) {
+    const msg = media.type === 'video'
+      ? await bot.telegram.sendVideo(chatId, { source: media.source }, { caption: captionHtml, parse_mode: 'HTML' })
+      : await bot.telegram.sendPhoto(chatId, { source: media.source }, { caption: captionHtml, parse_mode: 'HTML' });
+    mainIds = [msg.message_id];
+  } else {
+    const msg = await bot.telegram.sendMessage(chatId, captionHtml, { parse_mode: 'HTML' });
+    mainIds = [msg.message_id];
+  }
+
+  const ids: number[] = [...mainIds];
+  const reviewMsg = await bot.telegram.sendMessage(chatId, 'Review новости:', {
+    reply_parameters: { message_id: mainIds[0] },
+    reply_markup: newsReviewKeyboard(),
+  });
+  ids.push(reviewMsg.message_id);
+
+  return { ids, mainIds, reviewMsgId: reviewMsg.message_id };
+}
+
+export async function updateNewsReviewMessage(
+  chatId: string,
+  reviewMsgId: number,
+  allIds: number[],
+  mainIds: number[],
+  waQueueId?: string,
+) {
+  const bot = getBot();
+  await bot.telegram.editMessageText(
+    chatId,
+    reviewMsgId,
+    undefined,
+    `Review новости:\nmain_ids:${mainIds.join(',')}\nids:${allIds.join(',')}`,
+    { reply_markup: newsReviewKeyboard(waQueueId) }
+  );
+}
