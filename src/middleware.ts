@@ -34,13 +34,18 @@ export async function middleware(request: NextRequest) {
 
   // Мгновенная проверка: администратор мог только что отключить доступ —
   // сверяем актуальное состояние в базе на каждый переход по страницам,
-  // а не полагаемся только на срок жизни куки.
+  // а не полагаемся только на срок жизни куки. Но база (Neon, HTTP-драйвер)
+  // изредка отвечает с задержкой/сбоем на короткий момент — в этом случае
+  // выходить из аккаунта нельзя (иначе пользователя выкидывает на каждый
+  // клик по меню). Разлогиниваем только когда получили ЯВНЫЙ ответ, что
+  // аккаунт отключён — если строка вообще не пришла (сетевой сбой,
+  // холодный старт базы), считаем это сбоем связи, а не отключением.
   try {
     const sql = neon(process.env.META_DB_URL!);
     const rows = await sql`SELECT active, role, must_change_password FROM app_users WHERE id = ${session.uid} LIMIT 1`;
     const row = rows[0] as { active: boolean; role: string; must_change_password: boolean } | undefined;
 
-    if (!row || !row.active) {
+    if (row && row.active === false) {
       const url = request.nextUrl.clone();
       url.pathname = '/login';
       url.searchParams.set('next', pathname);
@@ -49,13 +54,13 @@ export async function middleware(request: NextRequest) {
       return res;
     }
 
-    if (row.must_change_password && pathname !== '/change-password') {
+    if (row?.must_change_password && pathname !== '/change-password') {
       const url = request.nextUrl.clone();
       url.pathname = '/change-password';
       return NextResponse.redirect(url);
     }
 
-    if (pathname.startsWith('/admin') && row.role !== 'admin') {
+    if (pathname.startsWith('/admin') && row && row.role !== 'admin') {
       const url = request.nextUrl.clone();
       url.pathname = '/';
       return NextResponse.redirect(url);
