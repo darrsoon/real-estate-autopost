@@ -17,6 +17,8 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const data: PostData = body.data;
+    // «YYYY-MM-DD HH:MM» по Дубаю — если стоит время, крон сам отправит и в TG-канал, и в WA.
+    const scheduledAt: string = body.scheduledAt || '';
 
     validatePostData(data);
     mark('body + validate');
@@ -46,7 +48,7 @@ export async function POST(request: Request) {
       let waQueueId = '';
       try {
         const label = `PRICE_CHANGE – ${data.code || data.unit || '?'} in ${data.project}`;
-        waQueueId = await addWaQueueItem(label, whatsappText, '', '', '', r1.mainIds, chatId);
+        waQueueId = await addWaQueueItem(label, whatsappText, '', scheduledAt, '', r1.mainIds, chatId);
       } catch (e) {
         console.error('WA queue save error (price change):', e);
       }
@@ -112,7 +114,7 @@ export async function POST(request: Request) {
       const label = `${data.postType} – ${data.code || data.unit || '?'} in ${data.project}`;
       const filename = `wa_${Date.now()}.jpg`;
       const driveFileId = await uploadToWaQueue(slideBuffer, filename);
-      waQueueId = await addWaQueueItem(label, whatsappText, driveFileId, '', '', r1.mainIds, chatId);
+      waQueueId = await addWaQueueItem(label, whatsappText, driveFileId, scheduledAt, '', r1.mainIds, chatId);
       mark('очередь WA');
     } catch (e) {
       console.error('WA queue save error:', e);
