@@ -12,12 +12,18 @@ function boldPreviewHtml(text: string): string {
   return escapeHtml(text).replace(/\*\*([\s\S]+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br/>');
 }
 
+// Convert datetime-local "YYYY-MM-DDTHH:MM" <-> хранимый формат "YYYY-MM-DD HH:MM"
+// (тот же формат, что и на странице «Расписание WA» — можно потом донастроить там же).
+const fromInput = (s: string) => (s ? s.replace('T', ' ').slice(0, 16) : '');
+
 export default function NewsPage() {
   const [text, setText] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [scheduledAt, setScheduledAt] = useState('');
   const [sending, setSending] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [sentScheduledAt, setSentScheduledAt] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -89,17 +95,21 @@ export default function NewsPage() {
         blobUrl = blob.url;
       }
 
+      const scheduledAtValue = fromInput(scheduledAt);
+
       const res = await fetch('/api/send-news', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text.trim(), blobUrl, mediaType, fileName }),
+        body: JSON.stringify({ text: text.trim(), blobUrl, mediaType, fileName, scheduledAt: scheduledAtValue }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
       setSent(true);
+      setSentScheduledAt(scheduledAtValue);
       setText('');
       setFile(null);
+      setScheduledAt('');
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (e: any) {
       setErrorMsg(e.message);
@@ -114,14 +124,17 @@ export default function NewsPage() {
         <h1 className="text-3xl font-bold tracking-tight mb-2" style={{ color: 'var(--ink-900)' }}>Новости</h1>
         <p className="bb-ink-3 text-sm">
           Пиши текст новости вручную, приложи фото или видео (необязательно) — черновик уйдёт на проверку
-          в тот же Telegram-чат, что и Посты. Дальше время отправки выставляется на странице «Расписание WA»,
-          как у обычных постов: уйдёт сама в WA-группу новостей и в TG-канал, либо отправь вручную кнопкой в чате.
+          в тот же Telegram-чат, что и Посты. Можно сразу поставить дату и время отправки ниже, либо
+          оставить пустым и выставить позже на странице «Расписание WA» — как у обычных постов: уйдёт сама
+          в WA-группу и в TG-канал, либо отправь вручную кнопкой в чате.
         </p>
       </div>
 
       {sent && (
         <div className="p-4 rounded-2xl bb-tint-ok border bb-edge bb-ok text-sm">
-          ✓ Черновик отправлен на проверку. Найди его в «Расписании WA», чтобы выставить время.
+          {sentScheduledAt
+            ? <>✓ Черновик отправлен на проверку. Уйдёт автоматически: <strong>{sentScheduledAt}</strong> (по Дубаю).</>
+            : <>✓ Черновик отправлен на проверку. Найди его в «Расписании WA», чтобы выставить время.</>}
         </div>
       )}
 
@@ -173,6 +186,19 @@ export default function NewsPage() {
             onChange={e => setFile(e.target.files?.[0] || null)}
             className="w-full text-sm bb-ink-2 file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bb-surface-soft file:text-sm file:font-medium"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium bb-ink-2 mb-2">⏰ Время отправки (Дубай, необязательно)</label>
+          <input
+            type="datetime-local"
+            value={scheduledAt}
+            onChange={e => setScheduledAt(e.target.value)}
+            className="px-3 py-2 bb-surface-soft border bb-edge rounded-xl text-sm bb-ink outline-none focus:ring-2 focus:bb-ring"
+          />
+          <p className="text-[11px] bb-ink-4 mt-1">
+            Не заполнено — время можно будет поставить позже на странице «Расписание WA».
+          </p>
         </div>
 
         <button
