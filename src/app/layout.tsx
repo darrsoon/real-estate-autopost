@@ -26,6 +26,7 @@ const navItems = [
   { href: '/no-posts', label: 'Юниты без постов', icon: '📝' },
   { href: '/broker-check', label: 'Сверка брокеров', icon: '🤝' },
   { href: '/stories', label: 'Сторис Наташе', icon: '📸' },
+  { href: '/news', label: 'Новости', icon: '📰' },
 ];
 
 export default function RootLayout({
